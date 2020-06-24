@@ -1,9 +1,7 @@
 import numpy as np
-import mne
 from mat4py import loadmat
-from mne import combine_evoked
-from mne.viz import plot_events
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
 
 
 def main():
@@ -17,26 +15,24 @@ def main():
     y_train = np.array(data['Y_train'])
     y_train = np.transpose(y_train, (1, 0))
 
-    value, time = np.where(y_train == 1)
+    results = np.zeros((8, 50))
 
-    trials = np.arange(start=0, stop=8000, step=50)
-    trials = np.expand_dims(trials, axis=1)
-    trials = np.pad(trials, ((0, 0), (0, 2)), mode='constant', constant_values=0)
+    for label in range(8):
+        for time in range(50):
+            intervals = np.arange(start=time, stop=8000, step=50)
+            # data samples for classifier at time 0
+            x_sample = x_train[:, intervals].transpose((1, 0))
+            # label samples for classifier at time 0 for label 0
+            y_sample = y_train[:, intervals][label]
 
-    for i in range(160):
-        sample = i * 50
-        ind = np.where(time==sample)
-        trials[i][2] = value[ind]
+            model = LogisticRegression(solver='liblinear')
+            scores = cross_val_score(model, x_sample, y_sample, cv=5)
 
-    x_train_epochs = np.array(np.array_split(x_train, 160, axis=1))
-    info = mne.create_info(ch_names=len(x_train), sfreq=100)
-    epochs = mne.EpochsArray(x_train_epochs, info=info, events=trials)
+            print("Time {} label {} accuracy: %0.2f (+/- %0.2f)".format(time, label) % (scores.mean(), scores.std() * 2))
 
-    
+            results[label, time] = scores.mean()
 
-    # model = LogisticRegression()
-
-    # model.fit(trials, y_train)
+    print(results)
 
 
 

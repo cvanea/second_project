@@ -1,2 +1,6 @@
 /SensorSpace
+/Results
 *.yml
+.DS_Store
+.idea/*
+

@@ -1,17 +1,22 @@
 from mat4py import loadmat
 import numpy as np
 import mne
+from sklearn.preprocessing import StandardScaler
 
 
-def get_epochs(sample, num_channels=None):
+def get_epochs(sample, num_channels=None, scale=False):
     matlab_data = loadmat('SensorSpace/FLISj{}.mat'.format(sample))
 
     data = matlab_data['data']
 
     x_train = np.array(data['X_train'])
     x_train = np.transpose(x_train, (1, 0))
+
     if num_channels:
         x_train = x_train[:num_channels]
+
+    if scale:
+        x_train = StandardScaler().fit_transform(x_train)
 
     y_train = np.array(data['Y_train'])
     y_train = np.transpose(y_train, (1, 0))
@@ -58,7 +63,7 @@ def get_y_train_sorted(sample):
     return np.sort(y_train_samples)
 
 
-def get_raw_data(sample):
+def get_raw_data(sample, scale=False):
     matlab_data = loadmat('SensorSpace/FLISj{}.mat'.format(sample))
     data = matlab_data['data']
     x_train = np.array(data['X_train'])
@@ -67,4 +72,9 @@ def get_raw_data(sample):
     y_train_samples = [np.where(x == 1)[0][0] for x in y_train]
     y_train_samples = np.array(y_train_samples)
 
+    if scale:
+        x_train = StandardScaler().fit_transform(x_train)
+
     return x_train, y_train_samples
+
+# def get_wavelet_complex()

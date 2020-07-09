@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.svm import LinearSVC, SVC
 from sklearn.linear_model import LogisticRegression
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
 from sklearn.model_selection import cross_val_score
 
 def linear_models(x_train, y_train, model_type='log_reg'):
@@ -41,6 +41,8 @@ def nonlinear_models(x_train, y_train, model_type='svm', kernel='poly'):
 
         if model_type == 'svm':
             model = SVC(kernel=kernel)
+        elif model_type == 'qda':
+            model = QuadraticDiscriminantAnalysis()
         else:
             raise ValueError("model {} isn't implemented".format(model_type))
 

@@ -8,8 +8,13 @@ from dim_reduction import kernel_pca, ica, pca
 from models import linear_models, nonlinear_models
 
 def main():
-    model_type = "log_reg"
-    exp_name = "PCA/all_samples"
+    model_type = "lda"
+    exp_name = "PCA/scaled/all_samples"
+
+    if exp_name.split("/")[1] == "scaled":
+        scaled = True
+    else:
+        scaled = False
 
     all_sample_results = np.zeros((21, 50))
 
@@ -17,9 +22,9 @@ def main():
         print("sample {}".format(sample))
 
         if exp_name == "raw/all_samples":
-            x_train, y_train = get_raw_data(sample)
+            x_train, y_train = get_raw_data(sample, scale=scaled)
         else:
-            epochs = get_epochs(sample)
+            epochs = get_epochs(sample, scale=scaled)
             reduced_data = pca(80, epochs, plot=False)
             x_train = reduced_data.transpose(0, 2, 1).reshape(-1, reduced_data.shape[1])
             y_train = get_y_train(sample)

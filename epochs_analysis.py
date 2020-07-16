@@ -36,14 +36,18 @@ def main():
     mne_wavelet_plot(epochs)
 
 def mne_wavelet_plot(epochs):
-    freqs = np.logspace(*np.log10([2, 42]), num=20)
+    freqs = np.logspace(*np.log10([2, 42]), num=15)
 
     n_cycles = freqs / 4.  # different number of cycle per frequency
     power, itc = tfr_morlet(epochs, freqs=freqs, n_cycles=n_cycles, use_fft=True,
                             return_itc=True, decim=3, n_jobs=1)
 
-    # power.plot(picks=[0], baseline=(0, 0.05), mode='logratio', title=power.ch_names[0])
-    itc.plot(picks=[272], baseline=(0, 0.05), mode='logratio', title=power.ch_names[272])
+    channel_picks = 0
+
+    # epochs.plot_image(picks=[channel_picks], evoked=True, combine='mean')
+
+    power.plot(picks=[channel_picks], baseline=(0, 0.05), mode='logratio', title=power.ch_names[channel_picks])
+    # itc.plot(picks=[272], baseline=(0, 0.05), mode='logratio', title=power.ch_names[272])
 
 def plot_psd_welch(epochs):
     kwargs = dict(fmin=2, fmax=50, n_jobs=1, n_per_seg=10)

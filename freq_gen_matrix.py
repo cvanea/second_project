@@ -15,7 +15,7 @@ from dim_reduction import pca
 
 def main():
     model_type = "lda"
-    exp_name = "temporal_gen_matrix/"
+    exp_name = "freq_gen_matrix/"
 
     for i, sample in enumerate(range(1, 22)):
         print("sample {}".format(sample))
@@ -28,19 +28,19 @@ def main():
 
         freqs = np.logspace(*np.log10([2, 25]), num=15)
         n_cycles = freqs / 4.
+        string_freqs = [round(x, 2) for x in freqs]
 
         print("applying morlet wavelet")
 
         wavelet_output = tfr_array_morlet(epochs.get_data(), sfreq=epochs.info['sfreq'], freqs=freqs, n_cycles=n_cycles,
                                           output='complex')
 
-        freq_results = np.zeros((wavelet_output.shape[2], 50, 50))
+        time_results = np.zeros((wavelet_output.shape[3], len(freqs), len(freqs)))
 
-        for freq in range(wavelet_output.shape[2]):
-            print("frequency: {}".format(freqs[freq]))
-            curr_freq = str(round(freqs[freq], 2))
+        for time in range(wavelet_output.shape[3]):
+            print("time: {}".format(time))
 
-            wavelet_epochs = wavelet_output[:, :, freq, :]
+            wavelet_epochs = wavelet_output[:, :, :, time]
             wavelet_epochs = np.append(wavelet_epochs.real, wavelet_epochs.imag, axis=1)
 
             wavelet_info = mne.create_info(ch_names=wavelet_epochs.shape[1], sfreq=epochs.info['sfreq'], ch_types='mag')
@@ -49,39 +49,38 @@ def main():
             x_train = pca(80, wavelet_epochs, plot=False)
 
             model = LinearModel(LinearDiscriminantAnalysis(solver='lsqr', shrinkage='auto'))
-            time_gen = GeneralizingEstimator(model, n_jobs=1, scoring='accuracy', verbose=True)
-            scores = cross_val_multiscore(time_gen, x_train, y_train, cv=5, n_jobs=1)
+            freq_gen = GeneralizingEstimator(model, n_jobs=1, scoring='accuracy', verbose=True)
+            scores = cross_val_multiscore(freq_gen, x_train, y_train, cv=5, n_jobs=1)
             scores = np.mean(scores, axis=0)
-            freq_results[freq] = scores
+            time_results[time] = scores
 
             sns.set()
-            ax = sns.lineplot(epochs.times, np.diag(scores))
-            ax.set(ylim=(0, 0.8), xlabel='Timepoints', ylabel='Accuracy',
-                   title='Cross Val Accuracy {} for Subject {} for Freq {}'.format(model_type, sample, curr_freq))
-            ax.axvline(x=0.15, color='b', linestyle='-')
+            ax = sns.barplot(np.sort(string_freqs), np.diag(scores), )
+            ax.set(ylim=(0, 0.8), xlabel='Frequencies', ylabel='Accuracy',
+                   title='Cross Val Accuracy {} for Subject {} for Time {}'.format(model_type, sample, time))
             ax.axhline(0.12, color='k', linestyle='--')
-            ax.figure.savefig("Results/{}/{}/sample_{}/freq_{}_accuracy.png"
-                              .format(model_type, exp_name, sample, curr_freq), dpi=300)
-            plt.close('all')
-
-            fig, ax = plt.subplots(1, 1)
-            im = ax.imshow(scores, interpolation='lanczos', origin='lower', cmap='RdBu_r',
-                           extent=epochs.times[[0, -1, 0, -1]], vmin=0., vmax=0.8)
-            ax.set_xlabel('Testing Time (s)')
-            ax.set_ylabel('Training Time (s)')
-            ax.set_title('Temporal generalization for Subject {} at Freq {}'.format(sample, curr_freq))
-            ax.axvline(0.15, color='k', linestyle='--')
-            ax.axhline(0.15, color='k', linestyle='--')
-            plt.colorbar(im, ax=ax)
-            ax.grid(False)
-            ax.figure.savefig("Results/{}/{}/sample_{}/freq_{}_matrix.png"
-                              .format(model_type, exp_name, sample, curr_freq), dpi=300)
+            ax.figure.set_size_inches(8, 6)
+            ax.figure.savefig("Results/{}/{}/sample_{}/time_{}_accuracy.png"
+                              .format(model_type, exp_name, sample, time), dpi=300)
             plt.close('all')
             # plt.show()
 
-        freq_results = freq_results.reshape(freq_results.shape[0], -1)
-        all_results_df = pd.DataFrame(freq_results)
-        all_results_df.to_csv("Results/{}/{}/sample_{}/all_freq_matrix_results.csv".format(model_type, exp_name, sample))
+            fig, ax = plt.subplots(1, 1)
+            im = ax.imshow(scores, interpolation='lanczos', origin='lower', cmap='RdBu_r',
+                           extent=[2, 25, 2, 25], vmin=0., vmax=0.8)
+            ax.set_xlabel('Testing Frequency (hz)')
+            ax.set_ylabel('Training Frequency (hz)')
+            ax.set_title('Frequency generalization for Subject {} at Time {}'.format(sample, time))
+            plt.colorbar(im, ax=ax)
+            ax.grid(False)
+            ax.figure.savefig("Results/{}/{}/sample_{}/time_{}_matrix.png"
+                              .format(model_type, exp_name, sample, time), dpi=300)
+            plt.close('all')
+            # plt.show()
+
+        time_results = time_results.reshape(time_results.shape[0], -1)
+        all_results_df = pd.DataFrame(time_results)
+        all_results_df.to_csv("Results/{}/{}/sample_{}/all_time_matrix_results.csv".format(model_type, exp_name, sample))
 
 
 if __name__ == "__main__":

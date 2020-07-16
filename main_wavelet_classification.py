@@ -12,8 +12,8 @@ from dim_reduction import kernel_pca, ica, pca
 from models import linear_models, nonlinear_models
 
 def main():
-    model_type = "lda"
-    exp_name = "wavelet_class/lsqr/complex"
+    model_type = "log_reg"
+    exp_name = "wavelet_class/L1/complex"
 
     for sample in range(1, 22):
         print("sample {}".format(sample))
@@ -23,13 +23,13 @@ def main():
 
         epochs = get_epochs(sample, scale=False)
 
-        freqs = np.logspace(*np.log10([2, 42]), num=20)
+        freqs = np.logspace(*np.log10([2, 25]), num=15)
         n_cycles = freqs / 4.
 
         print("applying morlet wavelet")
 
         # returns (n_epochs, n_channels, n_freqs, n_times)
-        if exp_name.split("/")[-1] == "real":
+        if exp_name.split("/")[-1] == "real" or exp_name.split("/")[-1] == "complex":
             wavelet_output = tfr_array_morlet(epochs.get_data(), sfreq=epochs.info['sfreq'], freqs=freqs, n_cycles=n_cycles,
                                        output='complex')
         elif exp_name.split("/")[-1] == "power":
@@ -38,9 +38,6 @@ def main():
         elif exp_name.split("/")[-1] == "phase":
             wavelet_output = tfr_array_morlet(epochs.get_data(), sfreq=epochs.info['sfreq'], freqs=freqs, n_cycles=n_cycles,
                                        output='phase')
-        elif exp_name.split("/")[-1] == "complex":
-            wavelet_output = tfr_array_morlet(epochs.get_data(), sfreq=epochs.info['sfreq'], freqs=freqs, n_cycles=n_cycles,
-                                       output='complex')
         else:
             raise ValueError("{} not an output of wavelet function".format(exp_name.split("/")[-1]))
 

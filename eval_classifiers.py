@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 def main():
 
-    results_dir = "Results/lda/wavelet_class/lsqr/complex/"
+    results_dir = "Results/log_reg/wavelet_class/L1/complex/"
 
     for sample in range(1, 22):
         sample_result = pd.read_csv(results_dir + "sample_{}/all_freq_results.csv".format(sample), index_col=0)

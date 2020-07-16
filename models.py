@@ -14,7 +14,7 @@ def linear_models(x_train, y_train, model_type='log_reg'):
         y_sample = y_train[intervals]
 
         if model_type == 'log_reg':
-            model = LogisticRegression(solver='liblinear', max_iter=3000)
+            model = LogisticRegression(solver='liblinear', max_iter=3000, penalty='l1')
         elif model_type == 'linear_svm':
             model = LinearSVC(dual=False, max_iter=3000)
         elif model_type == "lda":
@@ -53,3 +53,23 @@ def nonlinear_models(x_train, y_train, model_type='svm', kernel='poly'):
         results[time] = scores.mean()
 
     return results
+
+
+# def stacking_ensemble(x_train, y_train):
+#     results = np.zeros(50)
+#
+#     for time in range(50):
+#         intervals = np.arange(start=time, stop=x_train.shape[0], step=50)
+#
+#         x_sample = x_train[intervals, :]
+#         y_sample = y_train[intervals]
+#
+#
+#
+#         scores = cross_val_score(model, x_sample, y_sample, cv=5)
+#
+#         print("Time {} accuracy: %0.2f (+/- %0.2f)".format(time) % (scores.mean(), scores.std() * 2))
+#
+#         results[time] = scores.mean()
+#
+#     return results

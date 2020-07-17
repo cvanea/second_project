@@ -12,8 +12,8 @@ from dim_reduction import kernel_pca, ica, pca
 from models import linear_models, nonlinear_models
 
 def main():
-    model_type = "log_reg"
-    exp_name = "wavelet_class/L1/complex"
+    model_type = "lda"
+    exp_name = "wavelet_class/lsqr/complex"
 
     for sample in range(1, 22):
         print("sample {}".format(sample))
@@ -58,8 +58,8 @@ def main():
             wavelet_info = mne.create_info(ch_names=wavelet_epochs.shape[1], sfreq=epochs.info['sfreq'], ch_types='mag')
             wavelet_epochs = mne.EpochsArray(wavelet_epochs, info=wavelet_info, events=epochs.events)
 
-            real_reduced = pca(80, wavelet_epochs, plot=False)
-            x_train = real_reduced.transpose(0, 2, 1).reshape(-1, real_reduced.shape[1])
+            reduced = pca(80, wavelet_epochs, plot=False)
+            x_train = reduced.transpose(0, 2, 1).reshape(-1, reduced.shape[1])
 
             results = linear_models(x_train, y_train, model_type=model_type)
             freq_results[freq] = results

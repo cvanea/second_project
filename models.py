@@ -4,7 +4,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
 from sklearn.model_selection import cross_val_score
 
-def linear_models(x_train, y_train, model_type='log_reg'):
+def linear_models(x_train, y_train, model_type='log_reg', save_models=False):
     results = np.zeros(50)
 
     for time in range(50):

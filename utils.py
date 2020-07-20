@@ -1,6 +1,11 @@
+import pickle
+
 from mat4py import loadmat
 import numpy as np
 import mne
+from mne.decoding import UnsupervisedSpatialFilter
+from mne.time_frequency import tfr_array_morlet
+from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 
@@ -77,4 +82,40 @@ def get_raw_data(sample, scale=False):
 
     return x_train, y_train_samples
 
-# def get_wavelet_complex()
+def save_wavelet_complex():
+    all_x_train_samples = []
+
+    for sample in range(1, 22):
+        print("sample {}".format(sample))
+        epochs = get_epochs(sample, scale=False)
+        freqs = np.logspace(*np.log10([2, 25]), num=15)
+        n_cycles = freqs / 4.
+
+        print("applying morlet wavelet")
+        wavelet_output = tfr_array_morlet(epochs.get_data(), sfreq=epochs.info['sfreq'], freqs=freqs, n_cycles=n_cycles,
+                                          output='complex')
+
+        all_x_train_freqs = []
+
+        for freq in range(wavelet_output.shape[2]):
+            print("frequency: {}".format(freqs[freq]))
+
+            wavelet_epochs = wavelet_output[:, :, freq, :]
+            wavelet_epochs = np.append(wavelet_epochs.real, wavelet_epochs.imag, axis=1)
+
+            wavelet_info = mne.create_info(ch_names=wavelet_epochs.shape[1], sfreq=epochs.info['sfreq'], ch_types='mag')
+            wavelet_epochs = mne.EpochsArray(wavelet_epochs, info=wavelet_info, events=epochs.events)
+
+            pca = UnsupervisedSpatialFilter(PCA(n_components=80), average=False)
+            print('fitting pca')
+            reduced = pca.fit_transform(wavelet_epochs.get_data())
+            print('fitting done')
+
+            x_train = reduced.transpose(0, 2, 1).reshape(-1, reduced.shape[1])
+            all_x_train_freqs.append(x_train)
+
+        all_x_train_samples.append(all_x_train_freqs)
+
+    print('saving x_train for all samples')
+    pickle.dump(all_x_train_samples, open("DataTransformed/wavelet_complex/x_train_all_samples.pkl", "wb"))
+    print("x_train saved")

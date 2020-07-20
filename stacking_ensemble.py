@@ -1,48 +1,69 @@
-import mne
 import numpy as np
-from mne.time_frequency import tfr_array_morlet
+import pickle
+from sklearn.linear_model import LogisticRegression
+from mlxtend.classifier import StackingClassifier
 
-from dim_reduction import pca
-from utils import get_epochs, get_y_train
+from utils import get_y_train
 
 
 def main():
-    freqs = np.logspace(*np.log10([2, 25]), num=15)
-    n_cycles = freqs / 4.
+    base_model_type = "lda"
+    exp_name = "wavelet_class/lsqr/complex"
+    meta_model_type = 'log_reg'
 
-    all_results = np.zeros(50)
+    load_dir = "Results/{}/{}".format(base_model_type, exp_name)
+
+    freqs = np.logspace(*np.log10([2, 25]), num=15)
+    string_freqs = [str(round(x, 2)) for x in freqs]
+
+    all_sample_models = np.array(pickle.load(open(load_dir + "/all_models.pkl", "rb")))
+
+    all_y_train = []
 
     for sample in range(1, 22):
-        print("sample {}".format(sample))
-        y_train = get_y_train(sample)
-        epochs = get_epochs(sample, scale=False)
-        print("applying wavelet")
-        wavelet_output = tfr_array_morlet(epochs.get_data(), sfreq=epochs.info['sfreq'], freqs=freqs,
-                                          n_cycles=n_cycles, output='complex')
+        all_y_train.append(get_y_train(sample))
 
-        if sample == 1:
-            all_wavelet_ouputs = wavelet_output
-            all_y_train = y_train
-        else:
-            all_wavelet_ouputs = np.append(all_wavelet_ouputs, wavelet_output, axis=0)
-            all_y_train = np.append(all_y_train, y_train, axis=0)
+    all_x_train = pickle.load(open("DataTransformed/wavelet_complex/x_train_all_samples.pkl", "rb"))
 
+    for time in range(50):
+        print("time {}".format(time))
 
-    for freq in range(all_wavelet_ouputs.shape[2]):
-        print("frequency: {}".format(freqs[freq]))
+        sample_models = all_sample_models[:, :, time]
 
-        all_wavelet_epochs = all_wavelet_ouputs[:, :, freq, :]
-        all_wavelet_epochs = np.append(all_wavelet_epochs.real, all_wavelet_epochs.imag, axis=1)
+        sample_x_train = []
+        sample_y_train = []
 
-        wavelet_info = mne.create_info(ch_names=all_wavelet_epochs.shape[1], sfreq=epochs.info['sfreq'], ch_types='mag')
-        wavelet_epochs = mne.EpochsArray(all_wavelet_epochs, info=wavelet_info, events=epochs.events)
+        for sample in range(21):
+            intervals = np.arange(start=time, stop=all_y_train[sample].shape[0], step=50)
+            sample_y_train.append(all_y_train[sample][intervals])
 
-        reduced = pca(80, wavelet_epochs, plot=False)
-        x_train = reduced.transpose(0, 2, 1).reshape(-1, reduced.shape[1])
+            for freq in range(15):
+                all_x_train[sample][freq] = all_x_train[sample][freq][intervals, :]
 
+            sample_x_train.append(all_x_train[sample])
 
+        sample_x_train = np.array(sample_x_train)
+        sample_y_train = np.array(sample_y_train)
 
+        val_base_models = [model for freq_models in sample_models[-2:] for model in freq_models]
+        val_x_train = [data for freq_data in sample_x_train[-2:] for data in freq_data]
+        val_y_train = np.repeat(sample_y_train[-2:][:, np.newaxis], 15, axis=1)
+        val_y_train = [data for freq_data in val_y_train for data in freq_data]
 
+        base_models = [model for freq_models in sample_models[:-2] for model in freq_models]
+        x_train = [data for freq_data in sample_x_train[:-2] for data in freq_data]
+        y_train = np.repeat(sample_y_train[:-2][:, np.newaxis], 15, axis=1)
+        y_train = [data for freq_data in y_train for data in freq_data]
+
+        meta_model = LogisticRegression()
+
+        sclf = StackingClassifier(classifiers=base_models, meta_classifier=meta_model, verbose=1,
+                                  fit_base_estimators=False)
+        sclf.fit(x_train, y_train)
+
+        print(sclf.score(val_x_train, val_y_train))
+
+        print("done")
 
 if __name__ == "__main__":
     main()

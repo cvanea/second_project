@@ -3,20 +3,24 @@ import pickle
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import cross_val_score
+from sklearn.metrics import accuracy_score
 
 from utils import get_y_train
 
 
 def main():
+    mode = "hard"
+
     base_model_type = "lda"
     base_model_dir = "wavelet_class/lsqr/complex"
-    save_dir = "Results/ensembles/stacking_ensemble/per_sample"
+    save_dir = "Results/ensembles/voting_ensemble/{}".format(mode)
 
     load_dir = "Results/{}/{}".format(base_model_type, base_model_dir)
 
-    all_sample_preds = np.array(pickle.load(open(load_dir + "/all_proba_preds.pkl", "rb")))
+    if mode == "soft":
+        all_sample_preds = np.array(pickle.load(open(load_dir + "/all_proba_preds.pkl", "rb")))
+    else:
+        all_sample_preds = np.array(pickle.load(open(load_dir + "/all_preds.pkl", "rb")))
 
     all_sample_results = np.zeros((21, 50))
 
@@ -31,33 +35,33 @@ def main():
             intervals = np.arange(start=time, stop=sample_y_train.shape[0], step=50)
             y_train = sample_y_train[intervals]
             time_preds = freq_preds[:, time]
+            if mode == "soft":
+                summed_preds = np.sum(time_preds, axis=0)
+                class_preds = np.argmax(summed_preds, axis=1)
+            else:
+                time_preds = [np.vstack(time_preds).astype(np.int)][0]
+                class_preds = [np.bincount(sample).argmax() for sample in time_preds.T]
 
-            y_train = np.tile(y_train, 15)
-            x_train = [data for freq_data in time_preds for data in freq_data]
-            x_train = np.array(x_train)
+            acc_score = accuracy_score(y_train, class_preds)
 
-            meta_model = LogisticRegression()
-            scores = cross_val_score(meta_model, x_train, y_train, cv=5)
+            print("Time {} accuracy: %0.2f".format(time) % (acc_score))
 
-            print("Time {} accuracy: %0.2f (+/- %0.2f)".format(time) % (scores.mean(), scores.std() * 2))
-
-            results[time] = scores.mean()
+            results[time] = acc_score
 
         all_sample_results[sample] = results
 
         sns.set()
         ax = sns.lineplot(data=results, dashes=False)
-        ax.set(ylim=(0, 0.7), xlabel='Timepoints', ylabel='Accuracy',
-               title='Cross Val Accuracy Stacking Ensemble {} Base Models for Sample {}'.format(base_model_type,
-                                                                                                sample + 1))
+        ax.set(ylim=(0, 1), xlabel='Timepoints', ylabel='Accuracy',
+               title='Cross Val Accuracy Voting Ensemble for Subject {}'.format(sample + 1))
         plt.axvline(x=15, color='b', linestyle='--')
         ax.figure.savefig("{}/LOOCV_sample_{}.png".format(save_dir, sample + 1), dpi=300)
         plt.clf()
 
     sns.set()
     ax = sns.lineplot(data=np.mean(all_sample_results, axis=0), dashes=False)
-    ax.set(ylim=(0, 0.6), xlabel='Timepoints', ylabel='Accuracy',
-           title='Average Cross Val Accuracy Stacking Ensemble {} Base Models for All Samples'.format(base_model_type))
+    ax.set(ylim=(0, 1), xlabel='Timepoints', ylabel='Accuracy',
+           title='Average Cross Val Accuracy Voting Ensemble for All Subjects'.format(base_model_type))
     plt.axvline(x=15, color='b', linestyle='--')
     ax.figure.savefig("{}/LOOCV_all_samples.png".format(save_dir), dpi=300)
     plt.clf()

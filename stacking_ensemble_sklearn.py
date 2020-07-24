@@ -15,7 +15,7 @@ from utils import get_y_train, get_epochs
 
 def main():
     base_model_type = "lda"
-    save_dir = "Results/stacking_ensemble"
+    save_dir = "Results/ensembles/stacking_ensemble"
 
     freqs = np.logspace(*np.log10([2, 25]), num=15)
     n_cycles = freqs / 4.

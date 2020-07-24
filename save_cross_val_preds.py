@@ -62,11 +62,11 @@ def main():
 
         sample_preds.append(freq_preds)
         print('saving preds for sample {}'.format(sample))
-        pickle.dump(freq_preds, open("{}/sample_{}/all_freq_cv_preds.pkl".format(save_dir, sample), "wb"))
+        pickle.dump(freq_preds, open("{}/sample_{}/all_freq_proba_preds.pkl".format(save_dir, sample), "wb"))
         print("preds saved")
 
     print('saving preds for all samples')
-    pickle.dump(sample_preds, open("{}/all_cv_preds.pkl".format(save_dir), "wb"))
+    pickle.dump(sample_preds, open("{}/all_proba_preds.pkl".format(save_dir), "wb"))
     print("preds saved")
 
 

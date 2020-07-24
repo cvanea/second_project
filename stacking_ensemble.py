@@ -16,7 +16,7 @@ def main():
 
     load_dir = "Results/{}/{}".format(base_model_type, base_model_dir)
 
-    all_sample_preds = np.array(pickle.load(open(load_dir + "/all_cv_preds.pkl", "rb")))
+    all_sample_preds = np.array(pickle.load(open(load_dir + "/all_proba_preds.pkl", "rb")))
 
     all_sample_results = np.zeros((21, 50))
 
@@ -48,9 +48,10 @@ def main():
         sns.set()
         ax = sns.lineplot(data=results, dashes=False)
         ax.set(ylim=(0, 0.7), xlabel='Timepoints', ylabel='Accuracy',
-               title='Cross Val Accuracy Stacking Ensemble {} Base Models for Sample {}'.format(base_model_type, sample+1))
+               title='Cross Val Accuracy Stacking Ensemble {} Base Models for Sample {}'.format(base_model_type,
+                                                                                                sample + 1))
         plt.axvline(x=15, color='b', linestyle='--')
-        ax.figure.savefig("{}/LOOCV_sample_{}.png".format(save_dir, sample+1), dpi=300)
+        ax.figure.savefig("{}/LOOCV_sample_{}.png".format(save_dir, sample + 1), dpi=300)
         plt.clf()
 
     sns.set()

@@ -11,47 +11,35 @@ from utils import get_y_train
 def main():
     base_model_type = "lda"
     base_model_dir = "wavelet_class/lsqr/complex"
-    save_dir = "Results/stacking_ensemble"
+    save_dir = "Results/stacking_ensemble/"
 
     load_dir = "Results/{}/{}".format(base_model_type, base_model_dir)
 
-    all_sample_preds = np.array(pickle.load(open(load_dir + "/all_cv_preds.pkl", "rb")))
+    # (21, 15, 50, epochs, 8)
+    all_sample_preds = np.array(pickle.load(open(load_dir + "/all_proba_preds.pkl", "rb")))
 
+    # (21, all_time)
     all_y_train = []
 
     for sample in range(1, 22):
         all_y_train.append(get_y_train(sample))
-
-    all_x_train = pickle.load(open("DataTransformed/wavelet_complex/x_train_all_samples.pkl", "rb"))
 
     results = np.zeros(50)
 
     for time in range(50):
         print("time {}".format(time))
 
+        # (21, 15, epochs, 8)
         sample_preds = all_sample_preds[:, :, time]
 
+        # (21, epochs)
         sample_y_train = []
-        # sample_predictions_proba = []
 
         for sample in range(21):
             intervals = np.arange(start=time, stop=all_y_train[sample].shape[0], step=50)
             sample_y_train.append(all_y_train[sample][intervals])
 
-            freq_preds = sample_preds[sample]
-
-            freq_proba = []
-            for freq in range(15):
-                base_x_train = all_x_train[sample][freq][intervals, :]
-
-                # prediction_proba = sample_models[sample][freq].predict_proba(base_x_train)
-                # freq_proba.append(prediction_proba)
-
-            # sample_predictions_proba.append(freq_proba)
-
-
-
-        sample_predictions_proba = [np.vstack(sample).astype(np.float) for sample in sample_predictions_proba]
+        sample_predictions_proba = [np.vstack(sample).astype(np.float) for sample in sample_preds]
 
         sample_y_train = np.array(sample_y_train)
         sample_y_train = np.repeat(sample_y_train[:, np.newaxis], 15, axis=1)

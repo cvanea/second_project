@@ -26,7 +26,6 @@ def main():
         print("sample {}".format(sample))
 
         epochs = get_epochs(sample + 1, scale=False)
-
         x_train = epochs.get_data().reshape(epochs.get_data().shape[0], -1)
 
         time_results = np.zeros(50)

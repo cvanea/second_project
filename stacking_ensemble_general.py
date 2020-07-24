@@ -15,7 +15,7 @@ def main():
 
     load_dir = "Results/{}/{}".format(base_model_type, base_model_dir)
 
-    all_sample_models = np.array(pickle.load(open(load_dir + "/all_models.pkl", "rb")))
+    all_sample_preds = np.array(pickle.load(open(load_dir + "/all_cv_preds.pkl", "rb")))
 
     all_y_train = []
 
@@ -29,24 +29,27 @@ def main():
     for time in range(50):
         print("time {}".format(time))
 
-        sample_models = all_sample_models[:, :, time]
+        sample_preds = all_sample_preds[:, :, time]
 
         sample_y_train = []
-        sample_predictions_proba = []
+        # sample_predictions_proba = []
 
         for sample in range(21):
             intervals = np.arange(start=time, stop=all_y_train[sample].shape[0], step=50)
             sample_y_train.append(all_y_train[sample][intervals])
 
+            freq_preds = sample_preds[sample]
+
             freq_proba = []
             for freq in range(15):
                 base_x_train = all_x_train[sample][freq][intervals, :]
 
-                # use cross_val_predict here instead
-                prediction_proba = sample_models[sample][freq].predict_proba(base_x_train)
-                freq_proba.append(prediction_proba)
+                # prediction_proba = sample_models[sample][freq].predict_proba(base_x_train)
+                # freq_proba.append(prediction_proba)
 
-            sample_predictions_proba.append(freq_proba)
+            # sample_predictions_proba.append(freq_proba)
+
+
 
         sample_predictions_proba = [np.vstack(sample).astype(np.float) for sample in sample_predictions_proba]
 

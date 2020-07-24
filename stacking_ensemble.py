@@ -1,65 +1,68 @@
-import pickle
 import numpy as np
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.model_selection import cross_val_score
-from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.ensemble import StackingClassifier
+import pickle
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
 
 from utils import get_y_train
 
 
 def main():
     base_model_type = "lda"
-    save_dir = "Results/stacking_ensemble"
+    base_model_dir = "wavelet_class/lsqr/complex"
+    save_dir = "Results/stacking_ensemble/per_sample"
 
-    all_x_train = pickle.load(open("DataTransformed/wavelet_complex/x_train_all_samples.pkl", "rb"))
+    load_dir = "Results/{}/{}".format(base_model_type, base_model_dir)
 
-    all_freq_pipelines = []
+    all_sample_preds = np.array(pickle.load(open(load_dir + "/all_cv_preds.pkl", "rb")))
 
-    for freq in range(15):
-        pipe = make_pipeline(WaveletTransform(freq), LinearDiscriminantAnalysis(solver='lsqr', shrinkage='auto'))
-        pipe = ("pipe_{}".format(freq), pipe)
-        all_freq_pipelines.append(pipe)
-
-    all_results = np.zeros((21, 50))
+    all_sample_results = np.zeros((21, 50))
 
     for sample in range(21):
         print("sample {}".format(sample))
+        sample_y_train = get_y_train(sample + 1)
+        freq_preds = all_sample_preds[sample]
 
-        time_results = np.zeros(50)
+        results = np.zeros(50)
 
         for time in range(50):
-            x_train = all_x_train[sample]
-            y_train = get_y_train(sample + 1)
+            intervals = np.arange(start=time, stop=sample_y_train.shape[0], step=50)
+            y_train = sample_y_train[intervals]
+            time_preds = freq_preds[:, time]
 
-            intervals = np.arange(start=time, stop=y_train.shape[0], step=50)
+            y_train = np.tile(y_train, 15)
+            x_train = [data for freq_data in time_preds for data in freq_data]
+            x_train = np.array(x_train)
 
-            for freq in range(15):
-                x_train[freq] = x_train[freq][intervals, :]
-            y_train = y_train[intervals]
+            meta_model = LogisticRegression()
+            scores = cross_val_score(meta_model, x_train, y_train, cv=5)
 
-            model = StackingClassifier(all_freq_pipelines, LogisticRegression(), cv=5, stack_method='predict_proba')
-            scores = cross_val_score(model, x_train, y_train, cv=5)
             print("Time {} accuracy: %0.2f (+/- %0.2f)".format(time) % (scores.mean(), scores.std() * 2))
-            time_results[time] = scores.mean()
 
-        all_results[sample] = time_results
+            results[time] = scores.mean()
 
+        all_sample_results[sample] = results
 
-class WaveletTransform(BaseEstimator, TransformerMixin):
-    def __init__(self, frequency_index):
-        self.frequency_index = frequency_index
+        sns.set()
+        ax = sns.lineplot(data=results, dashes=False)
+        ax.set(ylim=(0, 0.7), xlabel='Timepoints', ylabel='Accuracy',
+               title='Cross Val Accuracy Stacking Ensemble {} Base Models for Sample {}'.format(base_model_type, sample+1))
+        plt.axvline(x=15, color='b', linestyle='--')
+        ax.figure.savefig("{}/LOOCV_sample_{}.png".format(save_dir, sample+1), dpi=300)
+        plt.clf()
 
-    def fit(self, X, y=None):
-        return self
+    sns.set()
+    ax = sns.lineplot(data=np.mean(all_sample_results, axis=0), dashes=False)
+    ax.set(ylim=(0, 0.6), xlabel='Timepoints', ylabel='Accuracy',
+           title='Average Cross Val Accuracy Stacking Ensemble {} Base Models for All Samples'.format(base_model_type))
+    plt.axvline(x=15, color='b', linestyle='--')
+    ax.figure.savefig("{}/LOOCV_all_samples.png".format(save_dir), dpi=300)
+    plt.clf()
 
-    def transform(self, X, y=None):
-        print("taking freq {} data".format(self.frequency_index))
-        X_ = X.copy()
-        X_ = X_[self.frequency_index]
-        return X_
+    results_df = pd.DataFrame(np.mean(all_sample_results, axis=0))
+    results_df.to_csv("{}/LOOCV_all_samples.csv".format(save_dir))
 
 
 if __name__ == "__main__":

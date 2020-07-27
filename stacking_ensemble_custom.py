@@ -12,7 +12,7 @@ from utils import get_y_train
 def main():
     base_model_type = "lda"
     base_model_dir = "wavelet_class/lsqr/complex"
-    save_dir = "Results/ensembles/stacking_ensemble/per_sample"
+    save_dir = "Results/ensembles/stacking_ensemble/custom/per_sample"
 
     load_dir = "Results/{}/{}".format(base_model_type, base_model_dir)
 

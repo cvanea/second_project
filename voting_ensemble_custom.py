@@ -55,6 +55,7 @@ def main():
         ax.set(ylim=(0, 1), xlabel='Timepoints', ylabel='Accuracy',
                title='Cross Val Accuracy Voting Ensemble for Subject {}'.format(sample + 1))
         plt.axvline(x=15, color='b', linestyle='--')
+        plt.axhline(12.5, color='k', linestyle='--')
         ax.figure.savefig("{}/LOOCV_sample_{}.png".format(save_dir, sample + 1), dpi=300)
         plt.clf()
 
@@ -63,6 +64,7 @@ def main():
     ax.set(ylim=(0, 1), xlabel='Timepoints', ylabel='Accuracy',
            title='Average Cross Val Accuracy Voting Ensemble for All Subjects'.format(base_model_type))
     plt.axvline(x=15, color='b', linestyle='--')
+    plt.axhline(12.5, color='k', linestyle='--')
     ax.figure.savefig("{}/LOOCV_all_samples.png".format(save_dir), dpi=300)
     plt.clf()
 

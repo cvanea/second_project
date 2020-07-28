@@ -25,7 +25,7 @@ def main():
     # sns.set_palette(sns.color_palette(sns.cubehelix_palette(20, reverse=True)))
     sns.set_palette(sns.color_palette("cubehelix", 20))
     ax = average_results.plot()
-    ax.set(ylim=(0, 0.6), xlabel='Timepoints', ylabel='Accuracy', title='Average Cross Val Accuracy for All Samples')
+    ax.set(ylim=(0, 0.6), xlabel='Timepoints', ylabel='Accuracy', title='Average Cross Val Accuracy for All Subjects')
     plt.legend(loc="lower center", ncol=5, fontsize='x-small', labels=string_freqs)
     plt.axvline(x=15, color='b', linestyle='--')
     plt.axhline(0.125, color='k', linestyle='--')

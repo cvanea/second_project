@@ -11,6 +11,7 @@ from utils import get_epochs, get_y_train
 from dim_reduction import kernel_pca, ica, pca
 from models import linear_models, nonlinear_models
 
+
 def main():
     model_type = "lda"
     exp_name = "wavelet_class/lsqr/complex"
@@ -30,14 +31,14 @@ def main():
 
         # returns (n_epochs, n_channels, n_freqs, n_times)
         if exp_name.split("/")[-1] == "real" or exp_name.split("/")[-1] == "complex":
-            wavelet_output = tfr_array_morlet(epochs.get_data(), sfreq=epochs.info['sfreq'], freqs=freqs, n_cycles=n_cycles,
-                                       output='complex')
+            wavelet_output = tfr_array_morlet(epochs.get_data(), sfreq=epochs.info['sfreq'], freqs=freqs,
+                                              n_cycles=n_cycles, output='complex')
         elif exp_name.split("/")[-1] == "power":
-            wavelet_output = tfr_array_morlet(epochs.get_data(), sfreq=epochs.info['sfreq'], freqs=freqs, n_cycles=n_cycles,
-                                       output='power')
+            wavelet_output = tfr_array_morlet(epochs.get_data(), sfreq=epochs.info['sfreq'], freqs=freqs,
+                                              n_cycles=n_cycles, output='power')
         elif exp_name.split("/")[-1] == "phase":
-            wavelet_output = tfr_array_morlet(epochs.get_data(), sfreq=epochs.info['sfreq'], freqs=freqs, n_cycles=n_cycles,
-                                       output='phase')
+            wavelet_output = tfr_array_morlet(epochs.get_data(), sfreq=epochs.info['sfreq'], freqs=freqs,
+                                              n_cycles=n_cycles, output='phase')
         else:
             raise ValueError("{} not an output of wavelet function".format(exp_name.split("/")[-1]))
 

@@ -5,7 +5,10 @@ import numpy as np
 import mne
 from mne.decoding import UnsupervisedSpatialFilter
 from mne.time_frequency import tfr_array_morlet
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 
@@ -119,3 +122,26 @@ def save_wavelet_complex():
     print('saving x_train for all samples')
     pickle.dump(all_x_train_samples, open("DataTransformed/wavelet_complex/x_train_all_samples.pkl", "wb"))
     print("x_train saved")
+
+
+def get_freq_pipelines(num_freqs):
+    all_freq_pipelines = []
+    for freqency_index in range(num_freqs):
+        pipe = make_pipeline(WaveletTransform(freqency_index),
+                             LinearDiscriminantAnalysis(solver='lsqr', shrinkage='auto'))
+        pipe = ("pipe_{}".format(freqency_index), pipe)
+        all_freq_pipelines.append(pipe)
+    return all_freq_pipelines
+
+
+class WaveletTransform(BaseEstimator, TransformerMixin):
+    def __init__(self, frequency_index):
+        self.frequency_index = frequency_index
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        x_train = X.copy()
+        x_train = x_train[:, np.arange(start=self.frequency_index * 80, stop=(self.frequency_index * 80) + 80, step=1)]
+        return x_train

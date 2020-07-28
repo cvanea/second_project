@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 def main():
 
-    results_dir = "Results/log_reg/wavelet_class/L1/complex/"
+    results_dir = "Results/lda/wavelet_class/lsqr/complex/"
 
     for sample in range(1, 22):
         sample_result = pd.read_csv(results_dir + "sample_{}/all_freq_results.csv".format(sample), index_col=0)
@@ -25,10 +25,11 @@ def main():
     # sns.set_palette(sns.color_palette(sns.cubehelix_palette(20, reverse=True)))
     sns.set_palette(sns.color_palette("cubehelix", 20))
     ax = average_results.plot()
-    ax.set(ylim=(0, 0.6), xlabel='Timepoints', ylabel='Accuracy', title='Cross Val Accuracy averaged across samples')
+    ax.set(ylim=(0, 0.6), xlabel='Timepoints', ylabel='Accuracy', title='Average Cross Val Accuracy for All Samples')
     plt.legend(loc="lower center", ncol=5, fontsize='x-small', labels=string_freqs)
     plt.axvline(x=15, color='b', linestyle='--')
-    ax.figure.savefig(results_dir + "avg_all_samples.png", dpi=300)
+    plt.axhline(0.125, color='k', linestyle='--')
+    ax.figure.savefig(results_dir + "avg_all_samples_zoom.png", dpi=300)
     plt.clf()
 
 

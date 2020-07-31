@@ -85,13 +85,14 @@ def get_raw_data(sample, scale=False):
 
     return x_train, y_train_samples
 
-def save_wavelet_complex():
+
+def save_wavelet_complex(n_components):
     all_x_train_samples = []
 
     for sample in range(1, 22):
         print("sample {}".format(sample))
         epochs = get_epochs(sample, scale=False)
-        freqs = np.logspace(*np.log10([2, 25]), num=15)
+        freqs = np.logspace(*np.log10([2, 15]), num=15)
         n_cycles = freqs / 4.
 
         print("applying morlet wavelet")
@@ -109,7 +110,7 @@ def save_wavelet_complex():
             wavelet_info = mne.create_info(ch_names=wavelet_epochs.shape[1], sfreq=epochs.info['sfreq'], ch_types='mag')
             wavelet_epochs = mne.EpochsArray(wavelet_epochs, info=wavelet_info, events=epochs.events)
 
-            pca = UnsupervisedSpatialFilter(PCA(n_components=80), average=False)
+            pca = UnsupervisedSpatialFilter(PCA(n_components=n_components), average=False)
             print('fitting pca')
             reduced = pca.fit_transform(wavelet_epochs.get_data())
             print('fitting done')
@@ -120,7 +121,8 @@ def save_wavelet_complex():
         all_x_train_samples.append(all_x_train_freqs)
 
     print('saving x_train for all samples')
-    pickle.dump(all_x_train_samples, open("DataTransformed/wavelet_complex/x_train_all_samples.pkl", "wb"))
+    pickle.dump(all_x_train_samples,
+                open("DataTransformed/wavelet_complex/15hz/pca_{}/x_train_all_samples.pkl".format(n_components), "wb"))
     print("x_train saved")
 
 
@@ -143,5 +145,9 @@ class WaveletTransform(BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
         x_train = X.copy()
-        x_train = x_train[:, np.arange(start=self.frequency_index * 80, stop=(self.frequency_index * 80) + 80, step=1)]
+        x_train = x_train[:, np.arange(start=self.frequency_index * int(x_train.shape[1] / 15),
+                                       stop=(self.frequency_index * int(x_train.shape[1] / 15)) + int(
+                                           x_train.shape[1] / 15), step=1)]
         return x_train
+
+# save_wavelet_complex(80)

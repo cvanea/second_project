@@ -18,7 +18,7 @@ def linear_models(x_train, y_train, model_type='log_reg', save_models=False):
         elif model_type == 'linear_svm':
             model = LinearSVC(dual=False, max_iter=3000)
         elif model_type == "lda":
-            model = LinearDiscriminantAnalysis(solver='lsqr',shrinkage='auto')
+            model = LinearDiscriminantAnalysis(solver='lsqr', shrinkage='auto')
         else:
             raise ValueError("model {} isn't implemented".format(model_type))
 

@@ -14,7 +14,7 @@ from utils import get_y_train
 def main():
     save_dir = "Results/ensembles/bagging/decision_tree"
 
-    all_x_train = pickle.load(open("DataTransformed/wavelet_complex/x_train_all_samples.pkl", "rb"))
+    all_x_train = pickle.load(open("DataTransformed/wavelet_complex/25hz/pca_80/x_train_all_samples.pkl", "rb"))
 
     all_results = np.zeros((21, 50))
 
@@ -32,8 +32,8 @@ def main():
             x_train = sample_x_train[:, intervals]
             x_train = x_train.transpose(1, 0, 2).reshape(x_train.shape[1], -1)
 
-            model = BaggingClassifier(base_estimator=None, n_estimators=15, max_samples=0.8, max_features=0.5,
-                                      random_state=0)
+            model = BaggingClassifier(base_estimator=LinearDiscriminantAnalysis(solver='lsqr', shrinkage='auto'),
+                                      n_estimators=15, max_samples=0.8, max_features=0.5, random_state=0)
             scores = cross_val_score(model, x_train, y_train, cv=5)
             print("Time {} accuracy: %0.2f (+/- %0.2f)".format(time) % (scores.mean(), scores.std() * 2))
             time_results[time] = scores.mean()

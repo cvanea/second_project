@@ -4,20 +4,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from sklearn.ensemble import VotingClassifier
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.decomposition import PCA
 from sklearn.model_selection import cross_val_score
 
-from utils import get_y_train, get_freq_pipelines
+from utils import get_y_train
 
 
 def main():
-    mode = "soft"
-    pca_comp = 80
-    save_dir = "Results/ensembles/voting/15hz/pca_{}/{}".format(pca_comp, mode)
+    save_dir = "Results/lda/post_PCA/no_pca_2"
 
-    all_x_train = pickle.load(open("DataTransformed/wavelet_complex/15hz/pca_{}/x_train_all_samples.pkl"
-                                   .format(pca_comp), "rb"))
-    all_freq_pipelines = get_freq_pipelines(15)
+    all_x_train = pickle.load(open("DataTransformed/wavelet_complex/25hz/pca_100/x_train_all_samples.pkl", "rb"))
 
     all_results = np.zeros((21, 50))
 
@@ -35,7 +32,10 @@ def main():
             x_train = sample_x_train[:, intervals]
             x_train = x_train.transpose(1, 0, 2).reshape(x_train.shape[1], -1)
 
-            model = VotingClassifier(estimators=all_freq_pipelines, voting=mode)
+            # pca = PCA(n_components=0.999)
+            # x_train = pca.fit_transform(x_train)
+
+            model = LinearDiscriminantAnalysis(solver='lsqr', shrinkage='auto')
             scores = cross_val_score(model, x_train, y_train, cv=5)
             print("Time {} accuracy: %0.2f (+/- %0.2f)".format(time) % (scores.mean(), scores.std() * 2))
             time_results[time] = scores.mean()
@@ -43,10 +43,10 @@ def main():
         sns.set()
         ax = sns.lineplot(data=time_results, dashes=False)
         ax.set(ylim=(0, 1), xlabel='Timepoints', ylabel='Accuracy',
-               title='Cross Val Accuracy Soft Voting Ensemble for Sample {}'.format(sample + 1))
+               title='Cross Val Accuracy for Sample {}'.format(sample + 1))
         plt.axvline(x=15, color='b', linestyle='--')
         plt.axhline(0.125, color='k', linestyle='--')
-        ax.figure.savefig("{}/LOOCV_sample_{}.png".format(save_dir, sample + 1), dpi=300)
+        ax.figure.savefig("{}/sample_{}.png".format(save_dir, sample + 1), dpi=300)
         plt.clf()
 
         all_results[sample] = time_results
@@ -54,14 +54,14 @@ def main():
     sns.set()
     ax = sns.lineplot(data=np.mean(all_results, axis=0), dashes=False)
     ax.set(ylim=(0, 1), xlabel='Timepoints', ylabel='Accuracy',
-           title='Average Cross Val Accuracy Soft Voting Ensemble for All Samples')
+           title='Average Cross Val Accuracy for All Samples')
     plt.axvline(x=15, color='b', linestyle='--')
     plt.axhline(0.125, color='k', linestyle='--')
-    ax.figure.savefig("{}/LOOCV_all_samples.png".format(save_dir), dpi=300)
+    ax.figure.savefig("{}/all_samples.png".format(save_dir), dpi=300)
     plt.clf()
 
     results_df = pd.DataFrame(np.mean(all_results, axis=0))
-    results_df.to_csv("{}/LOOCV_all_samples.csv".format(save_dir))
+    results_df.to_csv("{}/all_samples.csv".format(save_dir))
 
 
 if __name__ == "__main__":

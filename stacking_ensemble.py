@@ -12,9 +12,9 @@ from utils import get_y_train, get_freq_pipelines
 
 
 def main():
-    save_dir = "Results/ensembles/stacking_ensemble/per_sample"
+    save_dir = "Results/ensembles/stacking/per_sample/15hz"
 
-    all_x_train = pickle.load(open("DataTransformed/wavelet_complex/x_train_all_samples.pkl", "rb"))
+    all_x_train = pickle.load(open("DataTransformed/wavelet_complex/15hz/pca_80/x_train_all_samples.pkl", "rb"))
     all_freq_pipelines = get_freq_pipelines(15)
 
     all_results = np.zeros((21, 50))

@@ -14,7 +14,7 @@ from models import linear_models, nonlinear_models
 
 def main():
     model_type = "lda"
-    exp_name = "wavelet_class/lsqr/complex"
+    exp_name = "wavelet_class/lsqr/complex/15hz"
 
     for sample in range(1, 22):
         print("sample {}".format(sample))
@@ -24,23 +24,23 @@ def main():
 
         epochs = get_epochs(sample, scale=False)
 
-        freqs = np.logspace(*np.log10([2, 25]), num=15)
+        freqs = np.logspace(*np.log10([2, 15]), num=15)
         n_cycles = freqs / 4.
 
         print("applying morlet wavelet")
 
         # returns (n_epochs, n_channels, n_freqs, n_times)
-        if exp_name.split("/")[-1] == "real" or exp_name.split("/")[-1] == "complex":
+        if exp_name.split("/")[-2] == "real" or exp_name.split("/")[-2] == "complex":
             wavelet_output = tfr_array_morlet(epochs.get_data(), sfreq=epochs.info['sfreq'], freqs=freqs,
                                               n_cycles=n_cycles, output='complex')
-        elif exp_name.split("/")[-1] == "power":
+        elif exp_name.split("/")[-2] == "power":
             wavelet_output = tfr_array_morlet(epochs.get_data(), sfreq=epochs.info['sfreq'], freqs=freqs,
                                               n_cycles=n_cycles, output='power')
-        elif exp_name.split("/")[-1] == "phase":
+        elif exp_name.split("/")[-2] == "phase":
             wavelet_output = tfr_array_morlet(epochs.get_data(), sfreq=epochs.info['sfreq'], freqs=freqs,
                                               n_cycles=n_cycles, output='phase')
         else:
-            raise ValueError("{} not an output of wavelet function".format(exp_name.split("/")[-1]))
+            raise ValueError("{} not an output of wavelet function".format(exp_name.split("/")[-2]))
 
         y_train = get_y_train(sample)
 
@@ -51,9 +51,9 @@ def main():
 
             wavelet_epochs = wavelet_output[:, :, freq, :]
 
-            if exp_name.split("/")[-1] == "real":
+            if exp_name.split("/")[-2] == "real":
                 wavelet_epochs = wavelet_epochs.real
-            if exp_name.split("/")[-1] == "complex":
+            if exp_name.split("/")[-2] == "complex":
                 wavelet_epochs = np.append(wavelet_epochs.real, wavelet_epochs.imag, axis=1)
 
             wavelet_info = mne.create_info(ch_names=wavelet_epochs.shape[1], sfreq=epochs.info['sfreq'], ch_types='mag')
@@ -69,7 +69,7 @@ def main():
 
             sns.set()
             ax = sns.lineplot(data=results, dashes=False)
-            ax.set(ylim=(0, 0.7), xlabel='Time', ylabel='Accuracy',
+            ax.set(ylim=(0, 1), xlabel='Time', ylabel='Accuracy',
                    title='Cross Val Accuracy {} for Subject {} for Freq {}'.format(model_type, sample, curr_freq))
             plt.axvline(x=15, color='b', linestyle='--')
             ax.figure.savefig("Results/{}/{}/sample_{}/freq_{}.png".format(model_type, exp_name, sample, curr_freq),

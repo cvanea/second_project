@@ -126,10 +126,10 @@ def save_wavelet_complex(n_components):
     print("x_train saved")
 
 
-def get_freq_pipelines(num_freqs):
+def get_freq_pipelines(num_freqs, time=None):
     all_freq_pipelines = []
     for freqency_index in range(num_freqs):
-        pipe = make_pipeline(WaveletTransform(freqency_index),
+        pipe = make_pipeline(WaveletTransform(freqency_index, time),
                              LinearDiscriminantAnalysis(solver='lsqr', shrinkage='auto'))
         pipe = ("pipe_{}".format(freqency_index), pipe)
         all_freq_pipelines.append(pipe)
@@ -137,8 +137,9 @@ def get_freq_pipelines(num_freqs):
 
 
 class WaveletTransform(BaseEstimator, TransformerMixin):
-    def __init__(self, frequency_index):
+    def __init__(self, frequency_index, time=None):
         self.frequency_index = frequency_index
+        self.time = time
 
     def fit(self, X, y=None):
         return self
@@ -149,5 +150,6 @@ class WaveletTransform(BaseEstimator, TransformerMixin):
                                        stop=(self.frequency_index * int(x_train.shape[1] / 15)) + int(
                                            x_train.shape[1] / 15), step=1)]
         return x_train
+
 
 # save_wavelet_complex(80)

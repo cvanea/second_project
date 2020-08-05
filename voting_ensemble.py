@@ -13,7 +13,9 @@ from utils import get_y_train, get_freq_pipelines
 def main():
     mode = "soft"
     pca_comp = 80
-    save_dir = "Results/ensembles/voting/15hz/pca_{}/{}".format(pca_comp, mode)
+    diff_freqs = True
+
+    save_dir = "Results/ensembles/voting/diff_freqs/15hz/pca_{}/{}".format(pca_comp, mode)
 
     all_x_train = pickle.load(open("DataTransformed/wavelet_complex/15hz/pca_{}/x_train_all_samples.pkl"
                                    .format(pca_comp), "rb"))
@@ -30,12 +32,20 @@ def main():
         time_results = np.zeros(50)
 
         for time in range(50):
+            if diff_freqs:
+                if time <= 23:
+                    freq_pipelines = all_freq_pipelines
+                else:
+                    freq_pipelines = all_freq_pipelines[:11]
+            else:
+                freq_pipelines = all_freq_pipelines
+
             intervals = np.arange(start=time, stop=all_y_train.shape[0], step=50)
             y_train = all_y_train[intervals]
             x_train = sample_x_train[:, intervals]
             x_train = x_train.transpose(1, 0, 2).reshape(x_train.shape[1], -1)
 
-            model = VotingClassifier(estimators=all_freq_pipelines, voting=mode)
+            model = VotingClassifier(estimators=freq_pipelines, voting=mode)
             scores = cross_val_score(model, x_train, y_train, cv=5)
             print("Time {} accuracy: %0.2f (+/- %0.2f)".format(time) % (scores.mean(), scores.std() * 2))
             time_results[time] = scores.mean()
@@ -45,6 +55,8 @@ def main():
         ax.set(ylim=(0, 1), xlabel='Timepoints', ylabel='Accuracy',
                title='Cross Val Accuracy Soft Voting Ensemble for Sample {}'.format(sample + 1))
         plt.axvline(x=15, color='b', linestyle='--')
+        if diff_freqs:
+            plt.axvline(x=23, color='g', linestyle='--')
         plt.axhline(0.125, color='k', linestyle='--')
         ax.figure.savefig("{}/LOOCV_sample_{}.png".format(save_dir, sample + 1), dpi=300)
         plt.clf()
@@ -56,6 +68,8 @@ def main():
     ax.set(ylim=(0, 1), xlabel='Timepoints', ylabel='Accuracy',
            title='Average Cross Val Accuracy Soft Voting Ensemble for All Samples')
     plt.axvline(x=15, color='b', linestyle='--')
+    if diff_freqs:
+        plt.axvline(x=23, color='g', linestyle='--')
     plt.axhline(0.125, color='k', linestyle='--')
     ax.figure.savefig("{}/LOOCV_all_samples.png".format(save_dir), dpi=300)
     plt.clf()
